@@ -6,9 +6,8 @@ import { UI_STRINGS, LANGUAGES, FLAG_SVG, detectLanguage } from '../i18n.js'
 import { THEMES, detectTheme } from '../theme.js'
 import TireIcon from './TireIcon.vue'
 
-const GRID_SIZE = 5
+const GRID_SIZE = 4
 const CELL_COUNT = GRID_SIZE * GRID_SIZE
-const FREE_INDEX = 12
 const STORAGE_KEY = 'car-bingo-card-v1'
 const LANG_STORAGE_KEY = 'car-bingo-lang-v1'
 const THEME_STORAGE_KEY = 'car-bingo-theme-v1'
@@ -59,12 +58,12 @@ function toggleTheme() {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
 }
 
-function cellText(cell) {
-  return cell.free ? content.value.free : bingoData.entries[cell.poolIndex][lang.value]
+function cellText(poolIndex) {
+  return bingoData.entries[poolIndex][lang.value]
 }
 
-function cellEmoji(cell) {
-  return cell.free ? bingoData.freeEmoji : bingoData.entries[cell.poolIndex].emoji
+function cellEmoji(poolIndex) {
+  return bingoData.entries[poolIndex].emoji
 }
 
 const LINES = (() => {
@@ -96,9 +95,7 @@ function loadState() {
     const data = JSON.parse(raw)
     if (!Array.isArray(data.cells) || data.cells.length !== CELL_COUNT) return null
     if (!Array.isArray(data.marked) || data.marked.length !== CELL_COUNT) return null
-    if (!data.cells.every((cell) => cell && typeof cell === 'object' && 'poolIndex' in cell)) {
-      return null
-    }
+    if (!data.cells.every((n) => Number.isInteger(n))) return null
     return data
   } catch {
     return null
@@ -113,18 +110,8 @@ function saveState() {
 }
 
 function newCard() {
-  const poolIndices = shuffled(bingoData.entries.map((_, i) => i)).slice(0, CELL_COUNT - 1)
-  const nextCells = []
-  let poolPtr = 0
-  for (let i = 0; i < CELL_COUNT; i++) {
-    if (i === FREE_INDEX) {
-      nextCells.push({ poolIndex: null, free: true })
-    } else {
-      nextCells.push({ poolIndex: poolIndices[poolPtr++], free: false })
-    }
-  }
-  cells.value = nextCells
-  marked.value = nextCells.map((cell) => cell.free)
+  cells.value = shuffled(bingoData.entries.map((_, i) => i)).slice(0, CELL_COUNT)
+  marked.value = cells.value.map(() => false)
   round.value++
   saveState()
 }
@@ -181,13 +168,12 @@ watch(isBlackout, (is) => {
 })
 
 function toggleCell(idx) {
-  if (cells.value[idx].free) return
   marked.value[idx] = !marked.value[idx]
   saveState()
 }
 
 function requestNewCard() {
-  if (markedCount.value <= 1) {
+  if (markedCount.value === 0) {
     newCard()
     return
   }
@@ -266,21 +252,20 @@ if (saved) {
     <div class="grid-wrap">
       <div class="grid" :key="round">
         <button
-          v-for="(cell, idx) in cells"
+          v-for="(poolIndex, idx) in cells"
           :key="idx"
           type="button"
           class="cell"
           :class="{
             marked: marked[idx],
-            free: cell.free,
             'in-line': linedCellSet.has(idx),
           }"
           :style="{ '--delay': (idx % GRID_SIZE) * 0.04 + Math.floor(idx / GRID_SIZE) * 0.04 + 's' }"
           :aria-pressed="marked[idx]"
           @click="toggleCell(idx)"
         >
-          <span class="cell-emoji" aria-hidden="true">{{ cellEmoji(cell) }}</span>
-          <span class="cell-text">{{ cellText(cell) }}</span>
+          <span class="cell-emoji" aria-hidden="true">{{ cellEmoji(poolIndex) }}</span>
+          <span class="cell-text">{{ cellText(poolIndex) }}</span>
           <span class="stamp" aria-hidden="true"></span>
         </button>
       </div>
@@ -507,7 +492,7 @@ if (saved) {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
@@ -549,14 +534,6 @@ if (saved) {
 
 .cell:active {
   transform: scale(0.92);
-}
-
-.cell.free {
-  cursor: default;
-  font-weight: 700;
-  color: var(--accent);
-  border-color: var(--accent-border);
-  background: var(--accent-bg);
 }
 
 .cell-emoji {

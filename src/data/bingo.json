@@ -1,14 +1,11 @@
 {
-  "freeEmoji": "🏁",
   "en": {
     "title": "Car Bingo",
-    "subtitle": "Mark a square whenever you spot it on the road. Five in a row wins.",
-    "free": "FREE"
+    "subtitle": "Mark a square whenever you spot it on the road. Four in a row wins."
   },
   "nl": {
     "title": "Autobingo",
-    "subtitle": "Vink een vakje af als je het spot onderweg. Vijf op een rij wint.",
-    "free": "GRATIS"
+    "subtitle": "Vink een vakje af als je het spot onderweg. Vier op een rij wint."
   },
   "entries": [
     { "emoji": "🚗", "en": "Red car", "nl": "Rode auto" },
