@@ -16,6 +16,8 @@ spot on the road, tap a square when you see it, and race for a line — or the w
 - Card, marks, language, and theme all persist to `localStorage`
 - "New Card" asks for confirmation once you've made progress, so you don't lose a card
   by accident
+- Installable PWA (add to home screen) with offline support, for the inevitable dead
+  zones on a road trip
 
 ## Development
 

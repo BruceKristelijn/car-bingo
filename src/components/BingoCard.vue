@@ -50,6 +50,7 @@ watch(
   (value) => {
     safeSetItem(THEME_STORAGE_KEY, value)
     document.documentElement.setAttribute('data-theme', value)
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', cssVar('--accent'))
   },
   { immediate: true }
 )
